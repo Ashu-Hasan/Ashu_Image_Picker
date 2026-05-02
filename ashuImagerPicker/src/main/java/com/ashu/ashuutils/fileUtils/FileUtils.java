@@ -39,35 +39,123 @@ import java.net.URLDecoder;
 
 public interface FileUtils {
 
+    /**
+     * SharedPreferences name used to store app-related temporary data.
+     */
     public static final String PREF_NAME = "app_prefs";
+
+    /**
+     * Key used to store last captured image path.
+     */
     public static final String KEY_IMAGE_PATH = "image_path";
 
+
+    /**
+     * Callback interface for image source selection.
+     *
+     * Used to notify whether user selected:
+     * - Camera
+     * - Gallery
+     */
     public interface ResultCallback {
+
+        /**
+         * Called when user selects camera option.
+         *
+         * @param isCamera true if camera selected, false otherwise
+         */
         void onCameraSelected(boolean isCamera);
+
+        /**
+         * Called when user selects gallery option.
+         */
         void onGallerySelected();
     }
 
+
+    /**
+     * Saves the captured image path in SharedPreferences.
+     *
+     * @param context Context to access SharedPreferences
+     * @param path    Absolute file path of captured image
+     *
+     * ⚠️ Used internally to retrieve camera image later in onActivityResult()
+     */
     public static void setImagePath(Context context, String path) {
+
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_IMAGE_PATH, path).apply();
+
+        Messages.showTestLog("FileUtils", "💾 Image path saved: " + path);
     }
 
+
+    /**
+     * Retrieves the previously saved image path from SharedPreferences.
+     *
+     * @param context Context to access SharedPreferences
+     * @return Stored image path or null if not found
+     *
+     * ⚠️ Used after camera capture to get file path
+     */
     public static String getImagePath(Context context) {
+
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        return prefs.getString(KEY_IMAGE_PATH, null);
+        String path = prefs.getString(KEY_IMAGE_PATH, null);
+
+        Messages.showTestLog("FileUtils", "📂 Retrieved image path: " + path);
+
+        return path;
     }
 
+
+    /**
+     * Callback interface to return processed file result.
+     *
+     * Provides compressed image data including:
+     * - File
+     * - Bitmap
+     * - Base64 string
+     */
     public interface FileCallback {
+
+        /**
+         * Called when image processing is completed.
+         *
+         * @param selectedImageData Contains compressed file, bitmap, base64, and path
+         */
         void onFileReady(CompressFileData selectedImageData);
     }
 
 
-
-
+    /**
+     * Copies an image from URI to a temporary cache file.
+     *
+     * This method is used when:
+     * - Image is selected from gallery (Photo Picker / Intent)
+     * - URI cannot be directly accessed as a file
+     *
+     * @param context Context to access content resolver and cache directory
+     * @param uri     Source URI of selected image
+     *
+     * @return File object pointing to copied image in cache
+     *
+     * @throws IOException if file read/write fails
+     *
+     * ⚠️ Notes:
+     * - Do NOT try to get real file path from URI (not reliable)
+     * - Always use this method for safe file handling
+     */
     public static File copyUriToCacheFile(Context context, Uri uri) throws IOException {
 
+        Messages.showTestLog("FileUtils", "📥 Copying URI to cache: " + uri);
+
         InputStream inputStream = context.getContentResolver().openInputStream(uri);
-        if (inputStream == null) return null;
+
+        if (inputStream == null) {
+            Messages.showTestLog("FileUtils", "❌ Failed to open input stream from URI");
+            return null;
+        }
 
         File cacheFile = new File(
                 context.getCacheDir(),
@@ -78,6 +166,7 @@ public interface FileUtils {
 
         byte[] buffer = new byte[4096];
         int read;
+
         while ((read = inputStream.read(buffer)) != -1) {
             outputStream.write(buffer, 0, read);
         }
@@ -86,79 +175,190 @@ public interface FileUtils {
         outputStream.close();
         inputStream.close();
 
+        Messages.showTestLog("FileUtils", "✅ File copied to cache: " + cacheFile.getAbsolutePath());
+
         return cacheFile;
     }
 
 
+    /**
+     * ⚠️ DEPRECATED APPROACH (NOT RECOMMENDED)
+     *
+     * Tries to get absolute file path from URI.
+     * This method may NOT work on Android 10+ (Scoped Storage).
+     *
+     * @param activity Activity context
+     * @param uri      Content URI
+     * @return Absolute file path (may be null)
+     */
     public static String getAbsolutePath(Activity activity, Uri uri) {
+
+        Messages.showTestLog("FileUtils", "⚠️ getAbsolutePath is deprecated for modern Android");
+
         String[] projection = {MediaStore.MediaColumns.DATA};
-        @SuppressWarnings("deprecation")
-        Cursor cursor = activity.managedQuery(uri, projection, null, null, null);
-        if (cursor != null) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } else
-            return null;
+
+        try (Cursor cursor = activity.getContentResolver().query(uri, projection, null, null, null)) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+                String path = cursor.getString(columnIndex);
+
+                Messages.showTestLog("FileUtils", "📂 Absolute path: " + path);
+                return path;
+            }
+
+        } catch (Exception e) {
+            Messages.showTestLog("FileUtils", "🔥 Error getting absolute path: " + e.getMessage());
+        }
+
+        return null;
     }
 
+
+    /**
+     * Reads a file into byte array.
+     *
+     * @param filePath Absolute file path
+     * @return Byte array of file content
+     * @throws IOException if read fails
+     */
     private static byte[] readFileAsByteArray(String filePath) throws IOException {
+
+        Messages.showTestLog("FileUtils", "📥 Reading file: " + filePath);
+
         File file = new File(filePath);
-        FileInputStream fis = new FileInputStream(file);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-        while ((bytesRead = fis.read(buffer)) != -1) {
-            bos.write(buffer, 0, bytesRead);
+
+        try (FileInputStream fis = new FileInputStream(file);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+
+            Messages.showTestLog("FileUtils", "✅ File read successfully");
+            return bos.toByteArray();
         }
-        fis.close();
-        return bos.toByteArray();
     }
 
+    /**
+     * ⚠️ NOT RELIABLE ON ANDROID 10+
+     *
+     * Attempts to resolve real file path from URI.
+     * This method may fail due to Scoped Storage restrictions.
+     *
+     * 👉 RECOMMENDED: Use copyUriToCacheFile() instead
+     *
+     * @param activity Activity context
+     * @param uri      Content URI
+     * @return File path or fallback URI path
+     */
     public static String getRealPathFromURI(Activity activity, Uri uri) {
-        String[] projection = {MediaStore.Images.Media.DATA};
-        Cursor cursor = activity.getContentResolver().query(uri, projection, null, null, null);
 
-        if (cursor != null) {
-            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            String path = cursor.getString(columnIndex);
-            cursor.close();
-            return path;
+        Messages.showTestLog("FileUtils", "⚠️ getRealPathFromURI is not reliable on Android 10+");
+
+        try (Cursor cursor = activity.getContentResolver().query(
+                uri,
+                new String[]{MediaStore.Images.Media.DATA},
+                null,
+                null,
+                null
+        )) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                String path = cursor.getString(columnIndex);
+
+                Messages.showTestLog("FileUtils", "📂 Real path: " + path);
+                return path;
+            }
+
+        } catch (Exception e) {
+            Messages.showTestLog("FileUtils", "🔥 Error resolving real path: " + e.getMessage());
         }
-        return uri.getPath(); // Fallback
+
+        // Fallback (not reliable)
+        return uri.getPath();
     }
 
+
+    /**
+     * Converts a Bitmap into a temporary URI using FileProvider.
+     *
+     * This is useful when:
+     * - You need URI from Bitmap (for crop or sharing)
+     * - You cannot directly pass Bitmap to APIs
+     *
+     * @param bitmap  Bitmap to convert
+     * @param context Context for file access
+     * @return Content URI of saved bitmap
+     */
     public static Uri getUriFromBitmap(Bitmap bitmap, Context context) {
+
         try {
-            // Create a temporary file in the cache directory
+            Messages.showTestLog("FileUtils", "🖼️ Converting bitmap to URI");
+
+            // Create cache directory
             File imagesDir = new File(context.getCacheDir(), "images");
             if (!imagesDir.exists()) imagesDir.mkdirs();
 
-            File file = new File(imagesDir, "camera_image.jpg");
+            // Create file
+            File file = new File(imagesDir, "camera_image_" + System.currentTimeMillis() + ".jpg");
 
-            FileOutputStream outputStream = new FileOutputStream(file);
+            try (FileOutputStream outputStream = new FileOutputStream(file)) {
 
-            // Compress and save the bitmap to the file
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-            outputStream.flush();
-            outputStream.close();
+                // Compress bitmap
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                outputStream.flush();
+            }
 
-            // Return a content URI using FileProvider
-            return FileProvider.getUriForFile(context, context.getPackageName() + ".provider", file);
+            // Return FileProvider URI
+            Uri uri = FileProvider.getUriForFile(
+                    context,
+                    context.getPackageName() + ".provider",
+                    file
+            );
+
+            Messages.showTestLog("FileUtils", "✅ URI created: " + uri);
+
+            return uri;
+
         } catch (IOException e) {
-            e.printStackTrace();
+            Messages.showTestLog("FileUtils", "🔥 Error creating URI: " + e.getMessage());
             return null;
         }
     }
 
+
+    /**
+     * Safely decodes a Bitmap from a URI with downsampling to prevent OOM.
+     *
+     * This method:
+     * ✔ Reads image from URI (Gallery / Photo Picker)
+     * ✔ Avoids loading full-size image into memory
+     * ✔ Resizes using inSampleSize
+     *
+     * @param context Activity context (for ContentResolver)
+     * @param uri     Image URI
+     *
+     * @return Bitmap (scaled) or null if failed
+     *
+     * @throws IOException if stream fails
+     */
     public static Bitmap getBitmapFromUri(Activity context, Uri uri) throws IOException {
+
+        Messages.showTestLog("FileUtils", "🖼️ Decoding bitmap from URI: " + uri);
+
         InputStream input = context.getContentResolver().openInputStream(uri);
 
         if (input == null) {
+            Messages.showTestLog("FileUtils", "❌ InputStream is null");
             return null;
         }
 
+        // Step 1: Get image dimensions only
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeStream(input, null, options);
@@ -167,58 +367,140 @@ public interface FileUtils {
         int originalWidth = options.outWidth;
         int originalHeight = options.outHeight;
 
+        Messages.showTestLog("FileUtils", "📏 Original size: " + originalWidth + "x" + originalHeight);
+
         if (originalWidth <= 0 || originalHeight <= 0) {
+            Messages.showTestLog("FileUtils", "❌ Invalid image dimensions");
             return null;
         }
 
-        // Calculate a suitable inSampleSize
-        int reqWidth = 480;  // Example width
-        int reqHeight = 800; // Example height
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+        // Step 2: Define required size (you can adjust this)
+        int reqWidth = 480;
+        int reqHeight = 800;
 
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
         options.inJustDecodeBounds = false;
+
+        // Step 3: Decode actual bitmap with sampling
         input = context.getContentResolver().openInputStream(uri);
         Bitmap bitmap = BitmapFactory.decodeStream(input, null, options);
         input.close();
 
+        if (bitmap != null) {
+            Messages.showTestLog("FileUtils", "✅ Bitmap decoded successfully");
+        } else {
+            Messages.showTestLog("FileUtils", "❌ Failed to decode bitmap");
+        }
+
         return bitmap;
     }
 
-    // Method to calculate the appropriate sample size
-    private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+
+    /**
+     * Calculates optimal inSampleSize for bitmap scaling.
+     *
+     * @param options   BitmapFactory options (contains original size)
+     * @param reqWidth  Required width
+     * @param reqHeight Required height
+     *
+     * @return inSampleSize (power of 2)
+     */
+    private static int calculateInSampleSize(
+            BitmapFactory.Options options,
+            int reqWidth,
+            int reqHeight
+    ) {
+
         int height = options.outHeight;
         int width = options.outWidth;
         int inSampleSize = 1;
 
+        Messages.showTestLog("FileUtils", "📐 Calculating inSampleSize...");
+
         if (height > reqHeight || width > reqWidth) {
+
             int halfHeight = height / 2;
             int halfWidth = width / 2;
 
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+            while ((halfHeight / inSampleSize) >= reqHeight &&
+                    (halfWidth / inSampleSize) >= reqWidth) {
+
                 inSampleSize *= 2;
+
+                Messages.showTestLog("FileUtils", "📉 inSampleSize increased to: " + inSampleSize);
             }
         }
+
+        Messages.showTestLog("FileUtils", "✅ Final inSampleSize: " + inSampleSize);
+
         return inSampleSize;
     }
 
-    // Method to convert Bitmap to File
+
+    /**
+     * Converts a Bitmap into a File stored in cache directory.
+     *
+     * Useful for:
+     * ✔ Uploading image to server
+     * ✔ Passing file to APIs requiring File
+     *
+     * @param bitmap   Bitmap to convert
+     * @param fileName Desired file name (e.g., "image.jpg")
+     * @param context  Context for cache directory
+     *
+     * @return File object pointing to saved bitmap
+     */
     public static File bitmapToFile(Bitmap bitmap, String fileName, Context context) {
-        // Create a temporary file in the cache directory
+
+        Messages.showTestLog("FileUtils", "💾 Converting bitmap to file: " + fileName);
+
         File file = new File(context.getCacheDir(), fileName);
-        try {
-            // Compress the bitmap and save it to the file
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream); // Use PNG if transparency is required
-            fileOutputStream.flush();
-            fileOutputStream.close();
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+
+            // Compress bitmap (JPEG format)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+
+            fos.flush();
+
+            Messages.showTestLog("FileUtils", "✅ Bitmap saved to file: " + file.getAbsolutePath());
+
         } catch (IOException e) {
-            e.printStackTrace();
+            Messages.showTestLog("FileUtils", "🔥 Error saving bitmap: " + e.getMessage());
         }
+
         return file;
     }
 
 
-    public static void downloadImageIfNotExists(String TAG, Context context, String imageUrl, ImageView imageView, ImageView viewImageCrossIcon, String appImageFolderName) {
+
+    /**
+     * Downloads an image from URL and saves it in MediaStore if not already present.
+     *
+     * This method:
+     * ✔ Checks if image already exists locally
+     * ✔ Downloads image if not present
+     * ✔ Saves image using MediaStore (Scoped Storage safe)
+     * ✔ Displays image in ImageView (optional)
+     *
+     * @param TAG                 Logging tag for debugging
+     * @param context             Context (must be Activity for UI updates)
+     * @param imageUrl            Image URL to download
+     * @param imageView           Optional ImageView to display image
+     * @param viewImageCrossIcon  Optional cross icon visibility toggle
+     * @param appImageFolderName  Folder name inside Pictures directory
+     */
+    public static void downloadImageIfNotExists(
+            String TAG,
+            Context context,
+            String imageUrl,
+            ImageView imageView,
+            ImageView viewImageCrossIcon,
+            String appImageFolderName
+    ) {
+
+        Messages.showTestLog(TAG, "🌐 Starting image download flow");
+
         ProgressDialog progressDialog = null;
 
         if (imageView != null) {
@@ -228,112 +510,123 @@ public interface FileUtils {
             progressDialog.show();
         }
 
-        ProgressDialog finalProgressDialog = progressDialog;
+        ProgressDialog finalDialog = progressDialog;
 
         new Thread(() -> {
             try {
                 String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
-                String relativePath = Environment.DIRECTORY_PICTURES + "/AshuXKit";
-                File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), appImageFolderName);
-                File imageFile = new File(directory, fileName);
 
-                // If image exists, load from file
-                if (imageFile.exists()) {
-                    if (imageView != null) {
-                        Bitmap bitmap = decodeBitmapWithFallback(imageFile.getAbsolutePath(), imageView);
-                        ((Activity) context).runOnUiThread(() -> {
-                            imageView.setImageBitmap(bitmap);
-                            imageView.setVisibility(View.VISIBLE);
-                            viewImageCrossIcon.setVisibility(View.VISIBLE);
-                            if (finalProgressDialog != null) finalProgressDialog.dismiss();
-                        });
-                    }
-                    return;
-                }
+                Messages.showTestLog(TAG, "📥 Downloading: " + fileName);
 
-                // Download from URL
+                // Scoped storage path
+                String relativePath = Environment.DIRECTORY_PICTURES + "/" + appImageFolderName;
+
+                // Step 1: Download image
                 URL url = new URL(imageUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.connect();
 
+                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                    throw new IOException("Server returned HTTP " + connection.getResponseCode());
+                }
+
                 InputStream inputStream = connection.getInputStream();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
                 byte[] buffer = new byte[4096];
                 int bytesRead;
 
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+
+                inputStream.close();
+
+                byte[] imageBytes = baos.toByteArray();
+
+                // Step 2: Save in MediaStore
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
                 values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
                 values.put(MediaStore.Images.Media.RELATIVE_PATH, relativePath);
 
-                Uri imageUri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                Uri imageUri = context.getContentResolver().insert(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        values
+                );
 
                 if (imageUri == null) {
-                    Messages.showTestLog(TAG, "Failed to create image URI in MediaStore");
-                    if (finalProgressDialog != null)
-                        ((Activity) context).runOnUiThread(finalProgressDialog::dismiss);
-                    return;
+                    throw new IOException("Failed to create MediaStore entry");
                 }
 
                 OutputStream outputStream = context.getContentResolver().openOutputStream(imageUri);
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                    baos.write(buffer, 0, bytesRead);
+                if (outputStream != null) {
+                    outputStream.write(imageBytes);
+                    outputStream.flush();
+                    outputStream.close();
                 }
 
-                outputStream.flush();
-                outputStream.close();
-                inputStream.close();
+                Messages.showTestLog(TAG, "✅ Image saved to MediaStore");
 
+                // Step 3: Display image
                 if (imageView != null) {
-                    byte[] imageBytes = baos.toByteArray();
+
                     Bitmap bitmap = decodeBitmapWithFallback(imageBytes, imageView);
+
                     ((Activity) context).runOnUiThread(() -> {
                         imageView.setImageBitmap(bitmap);
                         imageView.setVisibility(View.VISIBLE);
-                        viewImageCrossIcon.setVisibility(View.VISIBLE);
-                        if (finalProgressDialog != null) finalProgressDialog.dismiss();
+
+                        if (viewImageCrossIcon != null) {
+                            viewImageCrossIcon.setVisibility(View.VISIBLE);
+                        }
+
+                        if (finalDialog != null) finalDialog.dismiss();
                     });
                 }
 
-                Messages.showTestLog(TAG, "Image saved in "+appImageFolderName);
-
             } catch (Exception e) {
-                Messages.showTestLog(TAG, "Download failed: " + e.getMessage());
-                ((Activity) context).runOnUiThread(() -> {
-                    if (finalProgressDialog != null) finalProgressDialog.dismiss();
-                });
+
+                Messages.showTestLog(TAG, "🔥 Download failed: " + e.getMessage());
+
+                if (context instanceof Activity) {
+                    ((Activity) context).runOnUiThread(() -> {
+                        if (finalDialog != null) finalDialog.dismiss();
+                    });
+                }
             }
         }).start();
     }
 
-    static Bitmap decodeBitmapWithFallback(String path, ImageView imageView) {
+
+    /**
+     * Decodes bitmap safely from byte array and applies orientation fix.
+     */
+    static Bitmap decodeBitmapWithFallback(byte[] imageBytes, ImageView imageView) {
+
         int reqWidth = imageView.getWidth() > 0 ? imageView.getWidth() : 800;
         int reqHeight = imageView.getHeight() > 0 ? imageView.getHeight() : 800;
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
+        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length, options);
 
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
         options.inJustDecodeBounds = false;
-        Bitmap bitmap = BitmapFactory.decodeFile(path, options);
 
-        // Fix orientation
-        try {
-            ExifInterface exif = new ExifInterface(path);
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-            bitmap = rotateBitmap(bitmap, orientation);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length, options);
 
         return bitmap;
     }
 
+    /**
+     * Rotates bitmap based on EXIF orientation.
+     */
     static Bitmap rotateBitmap(Bitmap bitmap, int orientation) {
+
         Matrix matrix = new Matrix();
+
         switch (orientation) {
             case ExifInterface.ORIENTATION_ROTATE_90:
                 matrix.postRotate(90);
@@ -349,147 +642,220 @@ public interface FileUtils {
         }
 
         try {
-            Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-            bitmap.recycle();
-            return rotatedBitmap;
+            return Bitmap.createBitmap(
+                    bitmap,
+                    0,
+                    0,
+                    bitmap.getWidth(),
+                    bitmap.getHeight(),
+                    matrix,
+                    true
+            );
         } catch (OutOfMemoryError e) {
-            e.printStackTrace();
             return bitmap;
         }
     }
 
-    // Helper for decoding from byte[]
-    static Bitmap decodeBitmapWithFallback(byte[] data, ImageView imageView) {
-        int reqWidth = imageView.getWidth() > 0 ? imageView.getWidth() : 800;
-        int reqHeight = imageView.getHeight() > 0 ? imageView.getHeight() : 800;
 
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeByteArray(data, 0, data.length, options);
-
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeByteArray(data, 0, data.length, options);
-    }
-
+    /**
+     * Retrieves display name of a document from its URI.
+     *
+     * @param activity Activity context
+     * @param uri      Content URI
+     * @return File name or fallback value
+     */
     public static String getDocumentName(Activity activity, Uri uri) {
+
+        String TAG = "FileUtils";
         String displayName = null;
 
-        Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null);
-        if (cursor != null) {
-            int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-            if (nameIndex != -1 && cursor.moveToFirst()) {
-                displayName = cursor.getString(nameIndex);
+        Messages.showTestLog(TAG, "📄 Getting document name from URI: " + uri);
+
+        try (Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null)) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex != -1) {
+                    displayName = cursor.getString(nameIndex);
+                }
             }
-            cursor.close();
+
+        } catch (Exception e) {
+            Messages.showTestLog(TAG, "🔥 Error fetching document name: " + e.getMessage());
         }
 
+        // Fallback
         if (displayName == null) {
             displayName = uri.getLastPathSegment();
+            Messages.showTestLog(TAG, "⚠️ Fallback document name used: " + displayName);
         }
+
         return displayName;
     }
 
+    /**
+     * Checks whether given URL is a PDF file.
+     *
+     * @param url File URL
+     * @return true if PDF, else false
+     */
     public static boolean isPDF(String url) {
-        return url != null && url.toLowerCase().endsWith(".pdf");
+
+        boolean result = url != null && url.toLowerCase().endsWith(".pdf");
+
+        Messages.showTestLog("FileUtils", "📑 isPDF check: " + result + " for URL: " + url);
+
+        return result;
     }
 
+    /**
+     * Renders first page of a PDF file into an ImageView as thumbnail.
+     *
+     * @param file      PDF file
+     * @param imageView Target ImageView
+     * @return true if rendered successfully, false otherwise
+     */
     public static boolean renderPDFThumbnail(File file, ImageView imageView) {
+
+        String TAG = "PDFThumbnail";
+
         if (file == null || !file.exists()) {
-            Log.e("PDF Thumbnail", "File is null or does not exist");
+            Messages.showTestLog(TAG, "❌ File is null or does not exist");
             return false;
         }
 
-        try {
-            ParcelFileDescriptor fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
-            PdfRenderer renderer = new PdfRenderer(fd);
+        try (ParcelFileDescriptor fd =
+                     ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
+             PdfRenderer renderer = new PdfRenderer(fd)) {
+
             PdfRenderer.Page page = renderer.openPage(0);
 
-            Bitmap bitmap = Bitmap.createBitmap(page.getWidth(), page.getHeight(), Bitmap.Config.ARGB_8888);
+            Bitmap bitmap = Bitmap.createBitmap(
+                    page.getWidth(),
+                    page.getHeight(),
+                    Bitmap.Config.ARGB_8888
+            );
+
             page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
 
             imageView.setImageBitmap(bitmap);
 
             page.close();
-            renderer.close();
-            fd.close();
 
-            return true; // ✅ Successfully rendered
+            Messages.showTestLog(TAG, "✅ PDF thumbnail rendered successfully");
+
+            return true;
+
         } catch (Exception e) {
-            e.printStackTrace();
-            return false; // ❌ Rendering failed
+            Messages.showTestLog(TAG, "🔥 PDF render failed: " + e.getMessage());
+            return false;
         }
     }
 
+    /**
+     * Extracts file name from URL.
+     *
+     * @param url File URL
+     * @return File name or empty string
+     */
     public static String getFileNameFromUrl(String url) {
-        if (url == null || url.trim().isEmpty()) return "";
+
+        String TAG = "FileUtils";
+
+        if (url == null || url.trim().isEmpty()) {
+            Messages.showTestLog(TAG, "⚠️ URL is empty");
+            return "";
+        }
 
         try {
             URL uri = new URL(url);
             String path = uri.getPath();
-            return path.substring(path.lastIndexOf('/') + 1);
+            String fileName = path.substring(path.lastIndexOf('/') + 1);
+
+            Messages.showTestLog(TAG, "🌐 File name from URL: " + fileName);
+
+            return fileName;
+
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            Messages.showTestLog(TAG, "🔥 Invalid URL: " + e.getMessage());
             return "";
         }
     }
 
+    /**
+     * Resolves file name from:
+     * ✔ Content URI
+     * ✔ File path
+     * ✔ URL
+     *
+     * @param context   Context
+     * @param pathOrUrl Path, URI, or URL
+     * @return File name
+     */
     public static String getFileNameFromPath(Context context, String pathOrUrl) {
+
         String TAG = "FileNameResolver";
+
         if (pathOrUrl == null || pathOrUrl.trim().isEmpty()) {
-            Log.w(TAG, "⚠️ Provided pathOrUrl is null or empty.");
+            Messages.showTestLog(TAG, "⚠️ pathOrUrl is empty");
             return "unknown_file";
         }
 
         try {
             Uri uri = Uri.parse(pathOrUrl);
 
-            // Case 1️⃣: If it's a content:// URI (from MediaStore or FileProvider)
+            // Case 1: content://
             if ("content".equalsIgnoreCase(uri.getScheme())) {
-                Cursor cursor = null;
-                try {
-                    cursor = context.getContentResolver().query(uri, null, null, null, null);
+
+                try (Cursor cursor = context.getContentResolver()
+                        .query(uri, null, null, null, null)) {
+
                     if (cursor != null && cursor.moveToFirst()) {
                         int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+
                         if (nameIndex != -1) {
                             String fileName = cursor.getString(nameIndex);
-                            Log.i(TAG, "📄 File name from content URI: " + fileName);
+                            Messages.showTestLog(TAG, "📄 From content URI: " + fileName);
                             return fileName;
                         }
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "🔥 Error reading content URI: " + e.getMessage());
-                } finally {
-                    if (cursor != null) cursor.close();
                 }
             }
 
-            // Case 2️⃣: If it's a file:// URI or a normal file path
+            // Case 2: file path
             if (pathOrUrl.startsWith("file://") || new File(pathOrUrl).exists()) {
+
                 File file = new File(pathOrUrl.replace("file://", ""));
                 String fileName = file.getName();
-                Log.i(TAG, "📁 File name from path: " + fileName);
+
+                Messages.showTestLog(TAG, "📁 From file path: " + fileName);
+
                 return fileName;
             }
 
-            // Case 3️⃣: If it's a URL (e.g., https://example.com/file.pdf)
+            // Case 3: URL
             if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+
                 String fileName = pathOrUrl.substring(pathOrUrl.lastIndexOf('/') + 1);
+
                 try {
-                    fileName = URLDecoder.decode(fileName, "UTF-8"); // handle %20 etc.
-                } catch (Exception ignore) {
-                }
-                Log.i(TAG, "🌐 File name from URL: " + fileName);
+                    fileName = URLDecoder.decode(fileName, "UTF-8");
+                } catch (Exception ignored) {}
+
+                Messages.showTestLog(TAG, "🌐 From URL: " + fileName);
+
                 return fileName;
             }
 
-            // Case 4️⃣: Fallback (extract after last slash)
+            // Case 4: fallback
             String fallback = pathOrUrl.substring(pathOrUrl.lastIndexOf('/') + 1);
-            Log.w(TAG, "⚠️ Fallback file name used: " + fallback);
+
+            Messages.showTestLog(TAG, "⚠️ Fallback used: " + fallback);
+
             return fallback;
 
         } catch (Exception e) {
-            Log.e(TAG, "🔥 Exception in getFileNameFromPath: " + e.getMessage(), e);
+            Messages.showTestLog(TAG, "🔥 Error resolving file name: " + e.getMessage());
             return "unknown_file";
         }
     }

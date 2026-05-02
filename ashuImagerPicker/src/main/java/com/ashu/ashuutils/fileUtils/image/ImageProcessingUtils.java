@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
@@ -130,7 +129,7 @@ public class ImageProcessingUtils {
             File imageFile = FileUtils.copyUriToCacheFile(activity, uri);
 
             if (imageFile == null || !imageFile.exists()) {
-                throw new IOException("Failed to copy image");
+                Messages.showTestLog(TAG, "Failed to copy image");
             }
 
             Messages.showTestLog(TAG, "📂 File copied: " + imageFile.getAbsolutePath());
@@ -172,7 +171,7 @@ public class ImageProcessingUtils {
             Uri croppedUri = UCrop.getOutput(data);
 
             if (croppedUri == null) {
-                throw new IllegalStateException("UCrop returned null URI");
+                Messages.showTestLog(TAG, "UCrop returned null URI");
             }
 
             Log.i(TAG, "✂️ Cropped Image URI: " + croppedUri);
@@ -181,16 +180,16 @@ public class ImageProcessingUtils {
             File imageFile = FileUtils.copyUriToCacheFile(activity, croppedUri);
 
             if (imageFile == null || !imageFile.exists()) {
-                throw new IOException("Failed to copy cropped image");
+                Messages.showTestLog(TAG, "Failed to copy cropped image");
             }
 
-            Log.i(TAG, "📂 Cropped File Path: " + imageFile.getAbsolutePath());
+            Messages.showTestLog(TAG, "📂 Cropped File Path: " + imageFile.getAbsolutePath());
 
             // 🔥 Send to common processor
             processAndDisplayImage(TAG, activity, imageFile, imageView, false, progressDialog, callback);
 
         } catch (Exception e) {
-            Log.e(TAG, "❌ Crop handling error: " + e.getMessage());
+            Messages.showTestLog(TAG, "❌ Crop handling error: " + e.getMessage());
             Toast.makeText(activity, "Failed to process cropped image", Toast.LENGTH_SHORT).show();
         }
     }
@@ -308,34 +307,81 @@ public class ImageProcessingUtils {
         });
     }
 
-    public static CompressFileData compressImage(String TAG, Activity activity, String appImageFolderName, File originalFile, int targetSizeKB) {
+    /**
+     * Compresses an image file to a target size (in KB) while maintaining good quality.
+     *
+     * This method performs:
+     * 1. Safe bitmap decoding (to avoid OutOfMemory)
+     * 2. EXIF-based rotation correction
+     * 3. Image resizing (dimension reduction)
+     * 4. Iterative compression (quality reduction)
+     *
+     * @param TAG                Used for logging/debugging. Helps track compression flow.
+     *
+     * @param activity           Activity context required to access storage directory.
+     *
+     * @param appImageFolderName Folder name inside app storage where compressed image will be saved.
+     *
+     * @param originalFile       Original image file to be compressed.
+     *
+     * @param targetSizeKB       Desired maximum size of compressed image (in KB).
+     *                           Example: 700 → tries to compress image around ≤ 700KB.
+     *
+     * @return CompressFileData  Object containing:
+     *                          - Compressed file
+     *                          - Bitmap
+     *                          - Base64 string
+     *                          - File path
+     *
+     * ⚠️ Notes:
+     * - Exact size is NOT guaranteed (JPEG compression is non-linear)
+     * - Result will be close to or below target size in most cases
+     * - Handles large images safely (no crash)
+     */
+    public static CompressFileData compressImage(
+            String TAG,
+            Activity activity,
+            String appImageFolderName,
+            File originalFile,
+            int targetSizeKB
+    ) {
+
         CompressFileData data = new CompressFileData();
 
         try {
             Log.i(TAG, "🧮 Starting compression for: " + originalFile.getAbsolutePath());
+
+            // Step 0: Validate file
             if (!originalFile.exists()) {
                 Log.e(TAG, "❌ Original file does not exist!");
                 return data;
             }
 
-            // Decode image with scaling options to avoid OOM for large files
+            // Step 1: Decode only bounds (safe for large images)
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeFile(originalFile.getAbsolutePath(), options);
-            Log.i(TAG, "📏 Original Image Dimensions: " + options.outWidth + "x" + options.outHeight);
 
+            Log.i(TAG, "📏 Original size: " + options.outWidth + "x" + options.outHeight);
+
+            // Step 2: Calculate sampling to reduce memory usage
             options.inSampleSize = calculateInSampleSize(options);
             options.inJustDecodeBounds = false;
+
             Bitmap bitmap = BitmapFactory.decodeFile(originalFile.getAbsolutePath(), options);
 
             if (bitmap == null) {
-                Log.e(TAG, "❌ Failed to decode bitmap from file!");
+                Log.e(TAG, "❌ Failed to decode bitmap");
                 return data;
             }
 
-            // Handle rotation
+            // Step 3: Fix image rotation using EXIF
             ExifInterface exif = new ExifInterface(originalFile.getAbsolutePath());
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+            );
+
             int rotationAngle = switch (orientation) {
                 case ExifInterface.ORIENTATION_ROTATE_90 -> 90;
                 case ExifInterface.ORIENTATION_ROTATE_180 -> 180;
@@ -346,68 +392,153 @@ public class ImageProcessingUtils {
             if (rotationAngle != 0) {
                 Matrix matrix = new Matrix();
                 matrix.postRotate(rotationAngle);
-                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                Log.i(TAG, "🔄 Rotated image by " + rotationAngle + " degrees");
+
+                bitmap = Bitmap.createBitmap(
+                        bitmap,
+                        0,
+                        0,
+                        bitmap.getWidth(),
+                        bitmap.getHeight(),
+                        matrix,
+                        true
+                );
+
+                Log.i(TAG, "🔄 Rotated image by " + rotationAngle + "°");
             }
 
-            // Prepare for compression
-            int quality = 90;
-            int targetSizeBytes = targetSizeKB * 1024;
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            // Step 4: Resize large images (improves compression efficiency)
+            int maxWidth = 1280;
+            int maxHeight = 1280;
 
-            File appDir = new File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), appImageFolderName);
+            if (bitmap.getWidth() > maxWidth || bitmap.getHeight() > maxHeight) {
+
+                float ratio = Math.min(
+                        (float) maxWidth / bitmap.getWidth(),
+                        (float) maxHeight / bitmap.getHeight()
+                );
+
+                int newWidth = Math.round(bitmap.getWidth() * ratio);
+                int newHeight = Math.round(bitmap.getHeight() * ratio);
+
+                bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+
+                Log.i(TAG, "📐 Resized to: " + newWidth + "x" + newHeight);
+            }
+
+            // Step 5: Prepare compression variables
+            int quality = 90;
+            int minQuality = 30;
+            int targetSizeBytes = targetSizeKB * 1024;
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            File appDir = new File(
+                    activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                    appImageFolderName
+            );
+
             if (!appDir.exists()) appDir.mkdirs();
 
-            File compressedFile = new File(appDir,
-                    "compressed_" + System.currentTimeMillis() + "_" + originalFile.getName());
+            File compressedFile = new File(
+                    appDir,
+                    "compressed_" + System.currentTimeMillis() + ".jpg"
+            );
 
+            // Step 6: Compression loop
+            int attempt = 0;
+            int maxAttempts = 10;
 
-            // Compress loop
             do {
-                byteArrayOutputStream.reset();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream);
-                Log.i(TAG, "📉 Compressing... quality=" + quality + ", size=" + byteArrayOutputStream.size() / 1024 + " KB");
-                quality -= 5;
-            } while (byteArrayOutputStream.size() > targetSizeBytes && quality > 10);
+                baos.reset();
 
-            // Write file
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
+
+                Log.i(TAG,
+                        "📉 Attempt: " + attempt +
+                                " | Quality: " + quality +
+                                " | Size: " + (baos.size() / 1024) + " KB"
+                );
+
+                quality -= 5;
+                attempt++;
+
+            } while (baos.size() > targetSizeBytes
+                    && quality > minQuality
+                    && attempt < maxAttempts);
+
+            // Step 7: Save compressed file
             try (FileOutputStream fos = new FileOutputStream(compressedFile)) {
-                fos.write(byteArrayOutputStream.toByteArray());
+                fos.write(baos.toByteArray());
             }
 
-            Log.i(TAG, "✅ Compression finished, saved at: " + compressedFile.getAbsolutePath());
+            Log.i(TAG, "✅ Compression completed: " + compressedFile.getAbsolutePath());
 
-            // Save data
-            String base64String = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT);
+            // Step 8: Prepare result data
+            String base64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+
             data.setBitmapFormat(bitmap);
             data.setFileFormat(compressedFile);
-            data.setString64BaseFormat(base64String);
-
-            bitmap.recycle();
+            data.setString64BaseFormat(base64);
+            data.setFilePath(compressedFile.getAbsolutePath());
 
         } catch (Exception e) {
+
             Log.e(TAG, "🔥 Compression failed: " + e.getMessage(), e);
+
             data.setBitmapFormat(null);
             data.setFileFormat(null);
             data.setString64BaseFormat(null);
+            data.setFilePath(null);
         }
 
         return data;
     }
 
+
+    /**
+     * Calculates the optimal inSampleSize value for Bitmap decoding.
+     *
+     * This method helps reduce memory usage by downsampling large images
+     * before loading them into memory.
+     *
+     * @param options BitmapFactory.Options containing original image width & height
+     *
+     * @return inSampleSize (power of 2 value)
+     *
+     * ⚠️ Notes:
+     * - Larger value → smaller image in memory
+     * - Helps prevent OutOfMemoryError for large images
+     * - Used before decoding actual bitmap
+     */
     private static int calculateInSampleSize(BitmapFactory.Options options) {
+
         int height = options.outHeight;
         int width = options.outWidth;
+
         int inSampleSize = 1;
 
+        // Log original dimensions
+        Log.i("ImageCompression", "📏 Original dimensions: " + width + "x" + height);
+
+        // Only scale if image is larger than threshold
         if (height > 1000 || width > 1000) {
+
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
 
-            while ((halfHeight / inSampleSize) >= 1000 && (halfWidth / inSampleSize) >= 1000) {
+            // Increase sample size in powers of 2
+            while ((halfHeight / inSampleSize) >= 1000 &&
+                    (halfWidth / inSampleSize) >= 1000) {
+
                 inSampleSize *= 2;
+
+                Log.i("ImageCompression",
+                        "📉 Increasing sample size → " + inSampleSize);
             }
         }
+
+        Log.i("ImageCompression", "✅ Final inSampleSize: " + inSampleSize);
+
         return inSampleSize;
     }
 

@@ -9,13 +9,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
@@ -306,51 +304,111 @@ public class ImagePicker {
                 .start(context, requestCode);
     }
 
-    public static void takePictureFromCamera(String TAG, Activity context, int req_code, boolean isFrontCamera) {
 
+    /**
+     * Launches the device camera to capture an image and saves it to a file.
+     *
+     * This method:
+     * - Checks for camera permission
+     * - Creates a temporary image file in app storage
+     * - Uses FileProvider to securely share file URI
+     * - Opens camera intent with front/back camera option
+     * - Stores file path for later retrieval
+     *
+     * @param TAG             Used for logging/debugging. Helps track logs for camera flow.
+     *
+     * @param context         Activity context required to:
+     *                        - Access file storage
+     *                        - Launch camera intent
+     *                        - Request permissions
+     *
+     * @param req_code        Request code used to identify result in onActivityResult().
+     *                        This helps distinguish camera result from other results.
+     *
+     * @param isFrontCamera   If true → attempts to open front camera
+     *                        If false → opens back camera (default)
+     *
+     * ⚠️ Notes:
+     * - Requires CAMERA permission
+     * - Uses FileProvider (must be configured in manifest)
+     * - Saved image path can be retrieved using FileUtils.getImagePath()
+     */
+    public static void takePictureFromCamera(
+            String TAG,
+            Activity context,
+            int req_code,
+            boolean isFrontCamera
+    ) {
+
+        Messages.showTestLog(TAG, "🚀 Starting camera flow...");
+
+        // Step 1: Check camera permission
         if (PermissionUtils.isCameraPermissionGranted(TAG, context)) {
-            try {
-                // Create file
-                File photoFile = new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-                        "image_" + System.currentTimeMillis() + ".jpg");
 
+            try {
+                Messages.showTestLog(TAG, "✅ Camera permission granted");
+
+                // Step 2: Create image file in app-specific storage
+                File photoFile = new File(
+                        context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                        "image_" + System.currentTimeMillis() + ".jpg"
+                );
+
+                Messages.showTestLog(TAG, "📂 Creating file: " + photoFile.getAbsolutePath());
+
+                // Step 3: Generate secure URI using FileProvider
                 Uri imageUri = FileProvider.getUriForFile(
                         context,
                         context.getPackageName() + ".provider",
                         photoFile
                 );
 
+                Messages.showTestLog(TAG, "🔗 FileProvider URI created");
+
+                // Step 4: Create camera intent
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                // Set output location (important for full-size image)
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+
+                // Grant temporary permission to camera app
                 cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                // Log camera direction
+                // Step 5: Set camera direction (optional)
                 Messages.showTestLog(TAG, "📸 Camera direction: " + (isFrontCamera ? "Front" : "Back"));
 
                 if (isFrontCamera) {
-                    // 🟢 Force front camera — works on most OEMs
+                    // 🟢 Try to force front camera (device-dependent)
                     cameraIntent.putExtra("android.intent.extras.LENS_FACING_FRONT", 1);
                     cameraIntent.putExtra("android.intent.extras.CAMERA_FACING", 1);
                     cameraIntent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
                 } else {
-                    // 🔵 Ensure back camera
+                    // 🔵 Default back camera
                     cameraIntent.putExtra("android.intent.extras.LENS_FACING_BACK", 0);
                     cameraIntent.putExtra("android.intent.extras.CAMERA_FACING", 0);
                     cameraIntent.putExtra("android.intent.extra.USE_FRONT_CAMERA", false);
                 }
 
-                // Save image path
+                // Step 6: Save image path for later use
                 FileUtils.setImagePath(context, photoFile.getAbsolutePath());
-                Messages.showTestLog(TAG, "📂 Image path saved: " + photoFile.getAbsolutePath());
+                Messages.showTestLog(TAG, "💾 Image path saved successfully");
 
-                // Start activity
+                // Step 7: Launch camera activity
                 context.startActivityForResult(cameraIntent, req_code);
-                Messages.showTestLog(TAG, "🚀 Camera intent started successfully.");
+                Messages.showTestLog(TAG, "🚀 Camera intent launched");
 
             } catch (Exception e) {
+
+                // Step 8: Handle error
                 Messages.showTestLog(TAG, "🔥 Error while opening camera: " + e.getMessage());
             }
 
-        }else PermissionUtils.requestCameraPermission(context);
+        } else {
+
+            // Step 9: Request permission if not granted
+            Messages.showTestLog(TAG, "❌ Camera permission not granted. Requesting permission...");
+            PermissionUtils.requestCameraPermission(context);
+        }
     }
+
 }
