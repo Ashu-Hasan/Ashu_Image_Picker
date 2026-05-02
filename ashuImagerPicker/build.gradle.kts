@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.ashu.ashuutils"
-    compileSdk = 34 // use 34 for now, 36 is not stable yet (causes build issues)
+    compileSdk = 36 // use 34 for now, 36 is not stable yet (causes build issues)
 
     defaultConfig {
         minSdk = 24
@@ -43,7 +43,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 groupId = "com.github.Ashu-Hasan"   // GitHub username
                 artifactId = "Ashu_Image_Picker"             // Library name
-                version = "1.2.0"                   // Match your Git tag
+                version = "1.0.2"                   // Match your Git tag
                 from(components["release"])
 
                 pom {
