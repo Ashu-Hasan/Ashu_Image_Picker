@@ -25,7 +25,7 @@ This library does NOT require:
 ✔ Uses Android Photo Picker (recommended by Google)
 
 📦 Installation
-implementation 'com.ashu:ashu-image-picker:1.0.0'
+implementation("com.github.Ashu-Hasan:Ashu_Image_Picker:Tag")
 ⚙️ Initial Setup (VERY IMPORTANT)
 
 You must initialize once in your Activity:
