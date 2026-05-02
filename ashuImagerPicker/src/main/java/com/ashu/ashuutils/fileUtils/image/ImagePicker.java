@@ -269,8 +269,8 @@ public class ImagePicker {
         Messages.showTestLog(TAG, "⚙️ Compression set: JPEG (80%)");
 
         // Circular crop overlay
-//        options.setCircleDimmedLayer(true);
-//        Messages.showTestLog(TAG, "⭕ Circle crop enabled");
+        options.setCircleDimmedLayer(true);
+        Messages.showTestLog(TAG, "⭕ Circle crop enabled");
 
         // Hide crop frame & grid
         options.setShowCropFrame(false);
