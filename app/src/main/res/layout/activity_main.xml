@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- Upload Document -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:fontFamily="@font/hind_semibold"
+        android:text="Upload Document here"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:id="@+id/pickDocument"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/close_icon" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/selectedDocument"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/hind"
+        android:gravity="center"
+        android:text="Selected Document: Empty"
+        android:textSize="14sp" />
+
+    <!-- Note -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/hind"
+        android:gravity="center"
+        android:text="Note: file should be in PNG, JPG , PDF format"
+        android:textSize="12sp" />
+
+</LinearLayout>

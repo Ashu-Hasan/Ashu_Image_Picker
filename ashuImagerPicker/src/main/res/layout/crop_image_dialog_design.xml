@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="20dp"
+    android:layout_marginVertical="5dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="10dp"
+    android:background="@android:color/transparent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center"
+        android:background="@android:color/white">
+
+        <!-- Image at the top -->
+        <ImageView
+            android:id="@+id/dialogImage"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/profile_icon" />
+
+        <!-- Message Text -->
+        <TextView
+            android:id="@+id/dialogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="16sp"
+            android:visibility="gone"
+            android:fontFamily="@font/hind_bold"
+            android:gravity="center"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:textColor="@android:color/black" />
+
+        <!-- Message Text -->
+        <TextView
+            android:id="@+id/dialogMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="14sp"
+            android:gravity="center"
+            android:padding="10dp"
+            android:textColor="@android:color/black" />
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/btnNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="NO"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:background="@drawable/button_bg2"
+                android:textColor="@android:color/white"
+                android:paddingVertical="5dp"
+                android:paddingHorizontal="15dp"
+                android:layout_margin="5dp" />
+
+            <TextView
+                android:id="@+id/btnYes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="YES"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:background="@drawable/button_bg2"
+                android:textColor="@android:color/white"
+                android:paddingVertical="5dp"
+                android:paddingHorizontal="15dp"
+                android:layout_margin="5dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

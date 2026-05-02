@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="UCrop.FixInsets" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Important -->
+        <item name="android:fitsSystemWindows">true</item>
+
+        <!-- Prevent edge-to-edge -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+
+        <!-- UCrop colors -->
+        <!--        <item name="ucrop_toolbar_widget_color">@android:color/black</item>-->
+        <!--        <item name="ucrop_statusbar_color">@android:color/white</item>-->
+        <!--        <item name="ucrop_toolbar_color">@android:color/white</item>-->
+    </style>
+</resources>
