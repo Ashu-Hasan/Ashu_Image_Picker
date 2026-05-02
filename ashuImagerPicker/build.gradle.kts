@@ -4,8 +4,8 @@ plugins {
 }
 
 android {
-    namespace = "com.ashu.ashuutils"
-    compileSdk = 34 // use 34 for now, 36 is not stable yet (causes build issues)
+    namespace = "com.ashu.ashu_image_picker"
+    compileSdk = 36 // use 34 for now, 36 is not stable yet (causes build issues)
 
     defaultConfig {
         minSdk = 24
@@ -42,14 +42,14 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 groupId = "com.github.Ashu-Hasan"   // GitHub username
-                artifactId = "AshuXKit"             // Library name
+                artifactId = "ashuImagerPicker"             // Library name
                 version = "1.2.0"                   // Match your Git tag
                 from(components["release"])
 
                 pom {
-                    name.set("AshuXKit")
+                    name.set("ashuImagerPicker")
                     description.set("A collection of reusable Android utility methods by Mr. Ash.")
-                    url.set("https://github.com/Ashu-Hasan/AshuXKit")
+                    url.set("https://github.com/Ashu-Hasan/ashuImagerPicker")
 
                     licenses {
                         license {
@@ -61,13 +61,13 @@ afterEvaluate {
                         developer {
                             id.set("ashuhasan")
                             name.set("Ashu Hasan")
-                            email.set("ashu@example.com")
+                            email.set("ashu.hasan155221@gmail.com")
                         }
                     }
                     scm {
-                        connection.set("scm:git:github.com/Ashu-Hasan/AshuXKit.git")
-                        developerConnection.set("scm:git:ssh://github.com/Ashu-Hasan/AshuXKit.git")
-                        url.set("https://github.com/Ashu-Hasan/AshuXKit")
+                        connection.set("scm:git:github.com/Ashu-Hasan/ashuImagerPicker.git")
+                        developerConnection.set("scm:git:ssh://github.com/Ashu-Hasan/ashuImagerPicker.git")
+                        url.set("https://github.com/Ashu-Hasan/ashuImagerPicker")
                     }
                 }
             }
