@@ -78,6 +78,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/button_bg2"
+                android:backgroundTint="@color/colorPrimary"
                 android:textColor="@android:color/white"
                 android:paddingVertical="5dp"
                 android:paddingHorizontal="15dp"
