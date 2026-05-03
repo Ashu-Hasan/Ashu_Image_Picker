@@ -16,8 +16,8 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.ashu.ashuutils.AppConstants;
-import com.ashu.ashuutils.Messages;
+import com.ashu.ashuutils.ImagePickerAppConstants;
+import com.ashu.ashuutils.ImageHelperMessages;
 import com.ashu.ashuutils.R;
 import com.ashu.ashuutils.fileUtils.FileUtils;
 import com.ashu.ashuutils.models.CompressFileData;
@@ -27,7 +27,6 @@ import com.yalantis.ucrop.UCrop;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,7 +51,7 @@ public class ImageProcessingUtils {
             ProgressDialog progressDialog,
             FileUtils.FileCallback callback
     ) {
-        Messages.showTestLog(TAG, "📸 Camera Image Path: " + cameraPath);
+        ImageHelperMessages.showTestLog(TAG, "📸 Camera Image Path: " + cameraPath);
 
         if (cameraPath == null || cameraPath.isEmpty()) {
             Toast.makeText(activity, "Camera image not found", Toast.LENGTH_SHORT).show();
@@ -88,13 +87,13 @@ public class ImageProcessingUtils {
         // Case 1: Single image
         if (data.getData() != null) {
             selectedUri = data.getData();
-            Messages.showTestLog(TAG, "🖼️ getData URI: " + selectedUri);
+            ImageHelperMessages.showTestLog(TAG, "🖼️ getData URI: " + selectedUri);
         }
 
         // Case 2: Multiple images / Android 13+
         else if (data.getClipData() != null && data.getClipData().getItemCount() > 0) {
             selectedUri = data.getClipData().getItemAt(0).getUri();
-            Messages.showTestLog(TAG, "🖼️ ClipData URI: " + selectedUri);
+            ImageHelperMessages.showTestLog(TAG, "🖼️ ClipData URI: " + selectedUri);
         }
 
         if (selectedUri == null) {
@@ -129,15 +128,15 @@ public class ImageProcessingUtils {
             File imageFile = FileUtils.copyUriToCacheFile(activity, uri);
 
             if (imageFile == null || !imageFile.exists()) {
-                Messages.showTestLog(TAG, "Failed to copy image");
+                ImageHelperMessages.showTestLog(TAG, "Failed to copy image");
             }
 
-            Messages.showTestLog(TAG, "📂 File copied: " + imageFile.getAbsolutePath());
+            ImageHelperMessages.showTestLog(TAG, "📂 File copied: " + imageFile.getAbsolutePath());
 
             processAndDisplayImage(TAG, activity, imageFile, imageView, cropImage, progressDialog, callback);
 
         } catch (Exception e) {
-            Messages.showTestLog(TAG, "❌ Error: " + e.getMessage());
+            ImageHelperMessages.showTestLog(TAG, "❌ Error: " + e.getMessage());
             Toast.makeText(activity, "Unable to load image", Toast.LENGTH_SHORT).show();
         }
     }
@@ -171,7 +170,7 @@ public class ImageProcessingUtils {
             Uri croppedUri = UCrop.getOutput(data);
 
             if (croppedUri == null) {
-                Messages.showTestLog(TAG, "UCrop returned null URI");
+                ImageHelperMessages.showTestLog(TAG, "UCrop returned null URI");
             }
 
             Log.i(TAG, "✂️ Cropped Image URI: " + croppedUri);
@@ -180,16 +179,16 @@ public class ImageProcessingUtils {
             File imageFile = FileUtils.copyUriToCacheFile(activity, croppedUri);
 
             if (imageFile == null || !imageFile.exists()) {
-                Messages.showTestLog(TAG, "Failed to copy cropped image");
+                ImageHelperMessages.showTestLog(TAG, "Failed to copy cropped image");
             }
 
-            Messages.showTestLog(TAG, "📂 Cropped File Path: " + imageFile.getAbsolutePath());
+            ImageHelperMessages.showTestLog(TAG, "📂 Cropped File Path: " + imageFile.getAbsolutePath());
 
             // 🔥 Send to common processor
             processAndDisplayImage(TAG, activity, imageFile, imageView, false, progressDialog, callback);
 
         } catch (Exception e) {
-            Messages.showTestLog(TAG, "❌ Crop handling error: " + e.getMessage());
+            ImageHelperMessages.showTestLog(TAG, "❌ Crop handling error: " + e.getMessage());
             Toast.makeText(activity, "Failed to process cropped image", Toast.LENGTH_SHORT).show();
         }
     }
@@ -227,18 +226,18 @@ public class ImageProcessingUtils {
         executor.execute(() -> {
             try {
 
-                Messages.showTestLog(TAG, "🧩 Starting image processing...");
+                ImageHelperMessages.showTestLog(TAG, "🧩 Starting image processing...");
 
                 // 🔥 Compress image (BACKGROUND THREAD)
                 CompressFileData data = compressImage(TAG, activity, "AppFolder", imageFile, 1024);
 
-                Messages.showTestLog(TAG, "✅ Compression completed");
+                ImageHelperMessages.showTestLog(TAG, "✅ Compression completed");
 
                 // 🔥 Decode bitmap (BACKGROUND THREAD)
                 Bitmap croppedBitmap = null;
                 if (cropImage) {
                     croppedBitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
-                    Messages.showTestLog(TAG, "🖼️ Bitmap decoded for crop");
+                    ImageHelperMessages.showTestLog(TAG, "🖼️ Bitmap decoded for crop");
                 }
 
                 Bitmap finalCroppedBitmap = croppedBitmap;
@@ -248,7 +247,7 @@ public class ImageProcessingUtils {
 
                     // Load into ImageView (UI thread)
                     if (imageView != null) {
-                        Messages.showTestLog(TAG, "📸 Loading image into ImageView");
+                        ImageHelperMessages.showTestLog(TAG, "📸 Loading image into ImageView");
                         Glide.with(activity)
                                 .load(imageFile)
                                 .into(imageView);
@@ -257,19 +256,19 @@ public class ImageProcessingUtils {
                     // Dismiss loader
                     if (finalDialog != null && finalDialog.isShowing()) {
                         finalDialog.dismiss();
-                        Messages.showTestLog(TAG, "⏹️ Loader dismissed");
+                        ImageHelperMessages.showTestLog(TAG, "⏹️ Loader dismissed");
                     }
 
                     // Callback
                     if (callback != null) {
-                        Messages.showTestLog(TAG, "📤 Returning file via callback");
+                        ImageHelperMessages.showTestLog(TAG, "📤 Returning file via callback");
                         callback.onFileReady(data);
                     }
 
                     // ✂️ Show crop dialog (UI thread)
                     if (cropImage && finalCroppedBitmap != null) {
 
-                        Messages.showTestLog(TAG, "✂️ Showing crop dialog");
+                        ImageHelperMessages.showTestLog(TAG, "✂️ Showing crop dialog");
 
                         Uri cropUri = FileUtils.getUriFromBitmap(finalCroppedBitmap, activity);
 
@@ -277,14 +276,14 @@ public class ImageProcessingUtils {
                                 TAG,
                                 activity,
                                 cropUri,
-                                AppConstants.IMAGE_CROP_REQUEST,
+                                ImagePickerAppConstants.IMAGE_CROP_REQUEST,
                                 "cropped_image",
                                 R.drawable.gallery_icon,
                                 R.color.black,
                                 new ImagePicker.CropImageCallback() {
                                     @Override
                                     public void onCropOptionCanceled() {
-                                        Messages.showTestLog(TAG, "❌ Crop canceled by user");
+                                        ImageHelperMessages.showTestLog(TAG, "❌ Crop canceled by user");
                                     }
                                 }
                         );
@@ -294,7 +293,7 @@ public class ImageProcessingUtils {
 
             } catch (Exception e) {
 
-                Messages.showTestLog(TAG, "🔥 Exception: " + e.getMessage());
+                ImageHelperMessages.showTestLog(TAG, "🔥 Exception: " + e.getMessage());
 
                 handler.post(() -> {
                     if (finalDialog != null && finalDialog.isShowing()) {

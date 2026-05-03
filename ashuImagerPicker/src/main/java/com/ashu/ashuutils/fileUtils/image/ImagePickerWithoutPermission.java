@@ -1,6 +1,5 @@
 package com.ashu.ashuutils.fileUtils.image;
 
-import android.app.Activity;
 import android.net.Uri;
 
 import androidx.activity.ComponentActivity;
@@ -8,7 +7,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 
-import com.ashu.ashuutils.Messages;
+import com.ashu.ashuutils.ImageHelperMessages;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ public class ImagePickerWithoutPermission {
      */
     public static void init(ComponentActivity activity) {
 
-        Messages.showTestLog("ImagePicker", "🔧 Initializing ImagePickerWithoutPermission");
+        ImageHelperMessages.showTestLog("ImagePicker", "🔧 Initializing ImagePickerWithoutPermission");
 
         launcher = activity.registerForActivityResult(
                 new ActivityResultContracts.PickVisualMedia(),
@@ -56,9 +55,9 @@ public class ImagePickerWithoutPermission {
                     if (callback != null) {
 
                         if (uri != null) {
-                            Messages.showTestLog("ImagePicker", "🖼️ Image selected: " + uri);
+                            ImageHelperMessages.showTestLog("ImagePicker", "🖼️ Image selected: " + uri);
                         } else {
-                            Messages.showTestLog("ImagePicker", "❌ No image selected (user cancelled)");
+                            ImageHelperMessages.showTestLog("ImagePicker", "❌ No image selected (user cancelled)");
                         }
 
                         callback.onImagePicked(uri);
@@ -79,10 +78,10 @@ public class ImagePickerWithoutPermission {
      */
     public static void pickImage(String TAG, ImagePickCallback cb) {
 
-        Messages.showTestLog(TAG, "📂 Opening gallery (Photo Picker)");
+        ImageHelperMessages.showTestLog(TAG, "📂 Opening gallery (Photo Picker)");
 
         if (launcher == null) {
-            Messages.showTestLog(TAG, "❌ ImagePicker not initialized. Call init() in onCreate()");
+            ImageHelperMessages.showTestLog(TAG, "❌ ImagePicker not initialized. Call init() in onCreate()");
             throw new IllegalStateException("ImagePicker not initialized. Call init() in onCreate()");
         }
 
@@ -95,6 +94,6 @@ public class ImagePickerWithoutPermission {
                         .build()
         );
 
-        Messages.showTestLog(TAG, "🚀 Gallery picker launched");
+        ImageHelperMessages.showTestLog(TAG, "🚀 Gallery picker launched");
     }
 }

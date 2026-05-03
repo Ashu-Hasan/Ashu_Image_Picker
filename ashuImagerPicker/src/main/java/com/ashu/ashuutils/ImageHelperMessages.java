@@ -12,9 +12,9 @@ import android.widget.Toast;
  * ✔ Respects debug mode (AppConstants)
  * ✔ Prevents logs in production builds
  */
-public final class Messages {
+public final class ImageHelperMessages {
 
-    private Messages() {
+    private ImageHelperMessages() {
         // Prevent instantiation
     }
 
@@ -26,7 +26,7 @@ public final class Messages {
      */
     public static void showTestLog(String TAG, String message) {
 
-        if (AppConstants.isDebug) {
+        if (ImagePickerAppConstants.isDebug) {
             Log.d(TAG, message);
         }
     }
@@ -49,7 +49,7 @@ public final class Messages {
      */
     public static void showTestToast(Context context, String message) {
 
-        if (AppConstants.isDebug) {
+        if (ImagePickerAppConstants.isDebug) {
             Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         }
     }

@@ -2,18 +2,13 @@ package com.ashu.ashu_image_picker;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.ashu.ashu_image_picker.databinding.ActivityMainBinding;
-import com.ashu.ashuutils.AppConstants;
+import com.ashu.ashuutils.ImagePickerAppConstants;
 import com.ashu.ashuutils.fileUtils.FileUtils;
 import com.ashu.ashuutils.fileUtils.image.ImagePicker;
 import com.ashu.ashuutils.fileUtils.image.ImagePickerWithoutPermission;
@@ -36,8 +31,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         binding.pickDocument.setOnClickListener(v -> {
-            AppConstants.isDebug = true;
-            ImagePicker.showPickImageDialog(TAG, MainActivity.this, AppConstants.IMAGE_REQUEST, R.color.black, new FileUtils.ResultCallback() {
+            ImagePickerAppConstants.isDebug = true;
+            ImagePicker.showPickImageDialog(TAG, MainActivity.this, ImagePickerAppConstants.IMAGE_REQUEST, R.color.black, new FileUtils.ResultCallback() {
                 @Override
                 public void onCameraSelected(boolean isCamera) {
                     isCameraSelected = isCamera;
@@ -77,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == AppConstants.IMAGE_REQUEST && resultCode == RESULT_OK) {
+        if (requestCode == ImagePickerAppConstants.IMAGE_REQUEST && resultCode == RESULT_OK) {
 
             if (isCameraSelected){
                 ImageProcessingUtils.handleCameraImage("MainActivityData", MainActivity.this, FileUtils.getImagePath(MainActivity.this), binding.image, true,null, new FileUtils.FileCallback() {
@@ -99,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        } else if (requestCode == AppConstants.IMAGE_CROP_REQUEST && resultCode == RESULT_OK) {
+        } else if (requestCode == ImagePickerAppConstants.IMAGE_CROP_REQUEST && resultCode == RESULT_OK) {
 
             ImageProcessingUtils.handleCroppedImage("MainActivityData", MainActivity.this, data, binding.image, null, new FileUtils.FileCallback() {
                 @Override

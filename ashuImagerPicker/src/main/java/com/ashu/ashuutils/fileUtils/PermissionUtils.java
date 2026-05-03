@@ -4,13 +4,12 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.ashu.ashuutils.AppConstants;
-import com.ashu.ashuutils.Messages;
+import com.ashu.ashuutils.ImagePickerAppConstants;
+import com.ashu.ashuutils.ImageHelperMessages;
 
 public class PermissionUtils {
     /**
@@ -29,7 +28,7 @@ public class PermissionUtils {
                     Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED;
 
-            Messages.showTestLog(TAG,
+            ImageHelperMessages.showTestLog(TAG,
                     granted ? "✅ Camera permission granted" : "❌ Camera permission denied");
 
             return granted;
@@ -47,12 +46,12 @@ public class PermissionUtils {
      */
     public static void requestCameraPermission(Activity context) {
 
-        Messages.showTestLog("PermissionUtils", "📸 Requesting camera permission");
+        ImageHelperMessages.showTestLog("PermissionUtils", "📸 Requesting camera permission");
 
         ActivityCompat.requestPermissions(
                 context,
                 new String[]{Manifest.permission.CAMERA},
-                AppConstants.CAMERA_PERMISSION_REQUEST_CODE
+                ImagePickerAppConstants.CAMERA_PERMISSION_REQUEST_CODE
         );
     }
 }

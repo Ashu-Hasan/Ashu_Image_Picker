@@ -19,7 +19,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
-import com.ashu.ashuutils.Messages;
+import com.ashu.ashuutils.ImageHelperMessages;
 import com.ashu.ashuutils.R;
 import com.ashu.ashuutils.fileUtils.FileUtils;
 import com.ashu.ashuutils.fileUtils.PermissionUtils;
@@ -166,7 +166,7 @@ public class ImagePicker {
             CropImageCallback callback
     ) {
 
-        Messages.showTestLog(TAG, "🟡 Opening crop option dialog");
+        ImageHelperMessages.showTestLog(TAG, "🟡 Opening crop option dialog");
 
         // Create dialog instance
         Dialog dialog = new Dialog(context);
@@ -184,7 +184,7 @@ public class ImagePicker {
 
         // Apply dynamic color to YES button (if provided)
         if (designColor != 0) {
-            Messages.showTestLog(TAG, "🎨 Applying button tint color");
+            ImageHelperMessages.showTestLog(TAG, "🎨 Applying button tint color");
             btnYes.setBackgroundTintList(
                     ContextCompat.getColorStateList(context, designColor)
             );
@@ -192,17 +192,17 @@ public class ImagePicker {
 
         // Set app logo (if provided)
         if (appLogo != 0) {
-            Messages.showTestLog(TAG, "🖼️ Setting dialog logo");
+            ImageHelperMessages.showTestLog(TAG, "🖼️ Setting dialog logo");
             dialogImage.setImageResource(appLogo);
         }
 
         // Set dialog message
         dialogMessage.setText("Would you like to crop image for better visibility?");
-        Messages.showTestLog(TAG, "💬 Dialog message set");
+        ImageHelperMessages.showTestLog(TAG, "💬 Dialog message set");
 
         // ❌ NO button click → cancel crop
         btnNo.setOnClickListener(v -> {
-            Messages.showTestLog(TAG, "❌ User selected NO (skip cropping)");
+            ImageHelperMessages.showTestLog(TAG, "❌ User selected NO (skip cropping)");
             dialog.dismiss();
 
             if (callback != null) {
@@ -212,7 +212,7 @@ public class ImagePicker {
 
         // ✅ YES button click → start crop
         btnYes.setOnClickListener(v -> {
-            Messages.showTestLog(TAG, "✅ User selected YES (start cropping)");
+            ImageHelperMessages.showTestLog(TAG, "✅ User selected YES (start cropping)");
             dialog.dismiss();
 
             startCrop(TAG, context, imageUri, imageRequest, imageName);
@@ -220,7 +220,7 @@ public class ImagePicker {
 
         // Show dialog
         dialog.show();
-        Messages.showTestLog(TAG, "📢 Crop dialog displayed");
+        ImageHelperMessages.showTestLog(TAG, "📢 Crop dialog displayed");
     }
 
 
@@ -241,7 +241,7 @@ public class ImagePicker {
             String imageName
     ) {
 
-        Messages.showTestLog(TAG, "✂️ Starting crop process");
+        ImageHelperMessages.showTestLog(TAG, "✂️ Starting crop process");
 
         // Create destination file in cache directory
         File file = new File(
@@ -249,7 +249,7 @@ public class ImagePicker {
                 imageName + System.currentTimeMillis() + ".jpg"
         );
 
-        Messages.showTestLog(TAG, "📂 Destination file: " + file.getAbsolutePath());
+        ImageHelperMessages.showTestLog(TAG, "📂 Destination file: " + file.getAbsolutePath());
 
         // Generate secure URI using FileProvider
         Uri destinationUri = FileProvider.getUriForFile(
@@ -258,7 +258,7 @@ public class ImagePicker {
                 file
         );
 
-        Messages.showTestLog(TAG, "🔗 Destination URI: " + destinationUri);
+        ImageHelperMessages.showTestLog(TAG, "🔗 Destination URI: " + destinationUri);
 
         // Configure UCrop options
         UCrop.Options options = new UCrop.Options();
@@ -266,11 +266,11 @@ public class ImagePicker {
         // Compression settings
         options.setCompressionFormat(Bitmap.CompressFormat.JPEG);
         options.setCompressionQuality(80);
-        Messages.showTestLog(TAG, "⚙️ Compression set: JPEG (80%)");
+        ImageHelperMessages.showTestLog(TAG, "⚙️ Compression set: JPEG (80%)");
 
         // Circular crop overlay
         options.setCircleDimmedLayer(true);
-        Messages.showTestLog(TAG, "⭕ Circle crop enabled");
+        ImageHelperMessages.showTestLog(TAG, "⭕ Circle crop enabled");
 
         // Hide crop frame & grid
         options.setShowCropFrame(false);
@@ -278,7 +278,7 @@ public class ImagePicker {
 
         // Lock aspect ratio (1:1)
         options.withAspectRatio(1, 1);
-        Messages.showTestLog(TAG, "📐 Aspect ratio locked to 1:1");
+        ImageHelperMessages.showTestLog(TAG, "📐 Aspect ratio locked to 1:1");
 
         // Toolbar customization
         options.setToolbarTitle("Crop");
@@ -296,7 +296,7 @@ public class ImagePicker {
                 UCropActivity.NONE
         );
 
-        Messages.showTestLog(TAG, "🚀 Launching UCrop activity");
+        ImageHelperMessages.showTestLog(TAG, "🚀 Launching UCrop activity");
 
         // Start UCrop
         UCrop.of(sourceUri, destinationUri)
@@ -340,13 +340,13 @@ public class ImagePicker {
             boolean isFrontCamera
     ) {
 
-        Messages.showTestLog(TAG, "🚀 Starting camera flow...");
+        ImageHelperMessages.showTestLog(TAG, "🚀 Starting camera flow...");
 
         // Step 1: Check camera permission
         if (PermissionUtils.isCameraPermissionGranted(TAG, context)) {
 
             try {
-                Messages.showTestLog(TAG, "✅ Camera permission granted");
+                ImageHelperMessages.showTestLog(TAG, "✅ Camera permission granted");
 
                 // Step 2: Create image file in app-specific storage
                 File photoFile = new File(
@@ -354,7 +354,7 @@ public class ImagePicker {
                         "image_" + System.currentTimeMillis() + ".jpg"
                 );
 
-                Messages.showTestLog(TAG, "📂 Creating file: " + photoFile.getAbsolutePath());
+                ImageHelperMessages.showTestLog(TAG, "📂 Creating file: " + photoFile.getAbsolutePath());
 
                 // Step 3: Generate secure URI using FileProvider
                 Uri imageUri = FileProvider.getUriForFile(
@@ -363,7 +363,7 @@ public class ImagePicker {
                         photoFile
                 );
 
-                Messages.showTestLog(TAG, "🔗 FileProvider URI created");
+                ImageHelperMessages.showTestLog(TAG, "🔗 FileProvider URI created");
 
                 // Step 4: Create camera intent
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -375,7 +375,7 @@ public class ImagePicker {
                 cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 // Step 5: Set camera direction (optional)
-                Messages.showTestLog(TAG, "📸 Camera direction: " + (isFrontCamera ? "Front" : "Back"));
+                ImageHelperMessages.showTestLog(TAG, "📸 Camera direction: " + (isFrontCamera ? "Front" : "Back"));
 
                 if (isFrontCamera) {
                     // 🟢 Try to force front camera (device-dependent)
@@ -391,22 +391,22 @@ public class ImagePicker {
 
                 // Step 6: Save image path for later use
                 FileUtils.setImagePath(context, photoFile.getAbsolutePath());
-                Messages.showTestLog(TAG, "💾 Image path saved successfully");
+                ImageHelperMessages.showTestLog(TAG, "💾 Image path saved successfully");
 
                 // Step 7: Launch camera activity
                 context.startActivityForResult(cameraIntent, req_code);
-                Messages.showTestLog(TAG, "🚀 Camera intent launched");
+                ImageHelperMessages.showTestLog(TAG, "🚀 Camera intent launched");
 
             } catch (Exception e) {
 
                 // Step 8: Handle error
-                Messages.showTestLog(TAG, "🔥 Error while opening camera: " + e.getMessage());
+                ImageHelperMessages.showTestLog(TAG, "🔥 Error while opening camera: " + e.getMessage());
             }
 
         } else {
 
             // Step 9: Request permission if not granted
-            Messages.showTestLog(TAG, "❌ Camera permission not granted. Requesting permission...");
+            ImageHelperMessages.showTestLog(TAG, "❌ Camera permission not granted. Requesting permission...");
             PermissionUtils.requestCameraPermission(context);
         }
     }

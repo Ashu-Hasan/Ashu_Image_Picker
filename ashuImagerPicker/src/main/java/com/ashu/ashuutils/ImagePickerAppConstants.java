@@ -8,9 +8,9 @@ package com.ashu.ashuutils;
  * ✔ Improves maintainability
  * ✔ Provides debug control
  */
-public final class AppConstants {
+public final class ImagePickerAppConstants {
 
-    private AppConstants() {
+    private ImagePickerAppConstants() {
         // Prevent instantiation
     }
 

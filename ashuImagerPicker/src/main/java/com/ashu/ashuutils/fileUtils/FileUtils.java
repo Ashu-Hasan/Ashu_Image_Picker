@@ -16,13 +16,12 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 import androidx.core.content.FileProvider;
 
-import com.ashu.ashuutils.Messages;
+import com.ashu.ashuutils.ImageHelperMessages;
 import com.ashu.ashuutils.models.CompressFileData;
 
 import java.io.ByteArrayOutputStream;
@@ -86,7 +85,7 @@ public interface FileUtils {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_IMAGE_PATH, path).apply();
 
-        Messages.showTestLog("FileUtils", "💾 Image path saved: " + path);
+        ImageHelperMessages.showTestLog("FileUtils", "💾 Image path saved: " + path);
     }
 
 
@@ -103,7 +102,7 @@ public interface FileUtils {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         String path = prefs.getString(KEY_IMAGE_PATH, null);
 
-        Messages.showTestLog("FileUtils", "📂 Retrieved image path: " + path);
+        ImageHelperMessages.showTestLog("FileUtils", "📂 Retrieved image path: " + path);
 
         return path;
     }
@@ -148,12 +147,12 @@ public interface FileUtils {
      */
     public static File copyUriToCacheFile(Context context, Uri uri) throws IOException {
 
-        Messages.showTestLog("FileUtils", "📥 Copying URI to cache: " + uri);
+        ImageHelperMessages.showTestLog("FileUtils", "📥 Copying URI to cache: " + uri);
 
         InputStream inputStream = context.getContentResolver().openInputStream(uri);
 
         if (inputStream == null) {
-            Messages.showTestLog("FileUtils", "❌ Failed to open input stream from URI");
+            ImageHelperMessages.showTestLog("FileUtils", "❌ Failed to open input stream from URI");
             return null;
         }
 
@@ -175,7 +174,7 @@ public interface FileUtils {
         outputStream.close();
         inputStream.close();
 
-        Messages.showTestLog("FileUtils", "✅ File copied to cache: " + cacheFile.getAbsolutePath());
+        ImageHelperMessages.showTestLog("FileUtils", "✅ File copied to cache: " + cacheFile.getAbsolutePath());
 
         return cacheFile;
     }
@@ -193,7 +192,7 @@ public interface FileUtils {
      */
     public static String getAbsolutePath(Activity activity, Uri uri) {
 
-        Messages.showTestLog("FileUtils", "⚠️ getAbsolutePath is deprecated for modern Android");
+        ImageHelperMessages.showTestLog("FileUtils", "⚠️ getAbsolutePath is deprecated for modern Android");
 
         String[] projection = {MediaStore.MediaColumns.DATA};
 
@@ -203,12 +202,12 @@ public interface FileUtils {
                 int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
                 String path = cursor.getString(columnIndex);
 
-                Messages.showTestLog("FileUtils", "📂 Absolute path: " + path);
+                ImageHelperMessages.showTestLog("FileUtils", "📂 Absolute path: " + path);
                 return path;
             }
 
         } catch (Exception e) {
-            Messages.showTestLog("FileUtils", "🔥 Error getting absolute path: " + e.getMessage());
+            ImageHelperMessages.showTestLog("FileUtils", "🔥 Error getting absolute path: " + e.getMessage());
         }
 
         return null;
@@ -224,7 +223,7 @@ public interface FileUtils {
      */
     private static byte[] readFileAsByteArray(String filePath) throws IOException {
 
-        Messages.showTestLog("FileUtils", "📥 Reading file: " + filePath);
+        ImageHelperMessages.showTestLog("FileUtils", "📥 Reading file: " + filePath);
 
         File file = new File(filePath);
 
@@ -238,7 +237,7 @@ public interface FileUtils {
                 bos.write(buffer, 0, bytesRead);
             }
 
-            Messages.showTestLog("FileUtils", "✅ File read successfully");
+            ImageHelperMessages.showTestLog("FileUtils", "✅ File read successfully");
             return bos.toByteArray();
         }
     }
@@ -257,7 +256,7 @@ public interface FileUtils {
      */
     public static String getRealPathFromURI(Activity activity, Uri uri) {
 
-        Messages.showTestLog("FileUtils", "⚠️ getRealPathFromURI is not reliable on Android 10+");
+        ImageHelperMessages.showTestLog("FileUtils", "⚠️ getRealPathFromURI is not reliable on Android 10+");
 
         try (Cursor cursor = activity.getContentResolver().query(
                 uri,
@@ -271,12 +270,12 @@ public interface FileUtils {
                 int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                 String path = cursor.getString(columnIndex);
 
-                Messages.showTestLog("FileUtils", "📂 Real path: " + path);
+                ImageHelperMessages.showTestLog("FileUtils", "📂 Real path: " + path);
                 return path;
             }
 
         } catch (Exception e) {
-            Messages.showTestLog("FileUtils", "🔥 Error resolving real path: " + e.getMessage());
+            ImageHelperMessages.showTestLog("FileUtils", "🔥 Error resolving real path: " + e.getMessage());
         }
 
         // Fallback (not reliable)
@@ -298,7 +297,7 @@ public interface FileUtils {
     public static Uri getUriFromBitmap(Bitmap bitmap, Context context) {
 
         try {
-            Messages.showTestLog("FileUtils", "🖼️ Converting bitmap to URI");
+            ImageHelperMessages.showTestLog("FileUtils", "🖼️ Converting bitmap to URI");
 
             // Create cache directory
             File imagesDir = new File(context.getCacheDir(), "images");
@@ -321,12 +320,12 @@ public interface FileUtils {
                     file
             );
 
-            Messages.showTestLog("FileUtils", "✅ URI created: " + uri);
+            ImageHelperMessages.showTestLog("FileUtils", "✅ URI created: " + uri);
 
             return uri;
 
         } catch (IOException e) {
-            Messages.showTestLog("FileUtils", "🔥 Error creating URI: " + e.getMessage());
+            ImageHelperMessages.showTestLog("FileUtils", "🔥 Error creating URI: " + e.getMessage());
             return null;
         }
     }
@@ -349,12 +348,12 @@ public interface FileUtils {
      */
     public static Bitmap getBitmapFromUri(Activity context, Uri uri) throws IOException {
 
-        Messages.showTestLog("FileUtils", "🖼️ Decoding bitmap from URI: " + uri);
+        ImageHelperMessages.showTestLog("FileUtils", "🖼️ Decoding bitmap from URI: " + uri);
 
         InputStream input = context.getContentResolver().openInputStream(uri);
 
         if (input == null) {
-            Messages.showTestLog("FileUtils", "❌ InputStream is null");
+            ImageHelperMessages.showTestLog("FileUtils", "❌ InputStream is null");
             return null;
         }
 
@@ -367,10 +366,10 @@ public interface FileUtils {
         int originalWidth = options.outWidth;
         int originalHeight = options.outHeight;
 
-        Messages.showTestLog("FileUtils", "📏 Original size: " + originalWidth + "x" + originalHeight);
+        ImageHelperMessages.showTestLog("FileUtils", "📏 Original size: " + originalWidth + "x" + originalHeight);
 
         if (originalWidth <= 0 || originalHeight <= 0) {
-            Messages.showTestLog("FileUtils", "❌ Invalid image dimensions");
+            ImageHelperMessages.showTestLog("FileUtils", "❌ Invalid image dimensions");
             return null;
         }
 
@@ -387,9 +386,9 @@ public interface FileUtils {
         input.close();
 
         if (bitmap != null) {
-            Messages.showTestLog("FileUtils", "✅ Bitmap decoded successfully");
+            ImageHelperMessages.showTestLog("FileUtils", "✅ Bitmap decoded successfully");
         } else {
-            Messages.showTestLog("FileUtils", "❌ Failed to decode bitmap");
+            ImageHelperMessages.showTestLog("FileUtils", "❌ Failed to decode bitmap");
         }
 
         return bitmap;
@@ -415,7 +414,7 @@ public interface FileUtils {
         int width = options.outWidth;
         int inSampleSize = 1;
 
-        Messages.showTestLog("FileUtils", "📐 Calculating inSampleSize...");
+        ImageHelperMessages.showTestLog("FileUtils", "📐 Calculating inSampleSize...");
 
         if (height > reqHeight || width > reqWidth) {
 
@@ -427,11 +426,11 @@ public interface FileUtils {
 
                 inSampleSize *= 2;
 
-                Messages.showTestLog("FileUtils", "📉 inSampleSize increased to: " + inSampleSize);
+                ImageHelperMessages.showTestLog("FileUtils", "📉 inSampleSize increased to: " + inSampleSize);
             }
         }
 
-        Messages.showTestLog("FileUtils", "✅ Final inSampleSize: " + inSampleSize);
+        ImageHelperMessages.showTestLog("FileUtils", "✅ Final inSampleSize: " + inSampleSize);
 
         return inSampleSize;
     }
@@ -452,7 +451,7 @@ public interface FileUtils {
      */
     public static File bitmapToFile(Bitmap bitmap, String fileName, Context context) {
 
-        Messages.showTestLog("FileUtils", "💾 Converting bitmap to file: " + fileName);
+        ImageHelperMessages.showTestLog("FileUtils", "💾 Converting bitmap to file: " + fileName);
 
         File file = new File(context.getCacheDir(), fileName);
 
@@ -463,10 +462,10 @@ public interface FileUtils {
 
             fos.flush();
 
-            Messages.showTestLog("FileUtils", "✅ Bitmap saved to file: " + file.getAbsolutePath());
+            ImageHelperMessages.showTestLog("FileUtils", "✅ Bitmap saved to file: " + file.getAbsolutePath());
 
         } catch (IOException e) {
-            Messages.showTestLog("FileUtils", "🔥 Error saving bitmap: " + e.getMessage());
+            ImageHelperMessages.showTestLog("FileUtils", "🔥 Error saving bitmap: " + e.getMessage());
         }
 
         return file;
@@ -499,7 +498,7 @@ public interface FileUtils {
             String appImageFolderName
     ) {
 
-        Messages.showTestLog(TAG, "🌐 Starting image download flow");
+        ImageHelperMessages.showTestLog(TAG, "🌐 Starting image download flow");
 
         ProgressDialog progressDialog = null;
 
@@ -516,7 +515,7 @@ public interface FileUtils {
             try {
                 String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
 
-                Messages.showTestLog(TAG, "📥 Downloading: " + fileName);
+                ImageHelperMessages.showTestLog(TAG, "📥 Downloading: " + fileName);
 
                 // Scoped storage path
                 String relativePath = Environment.DIRECTORY_PICTURES + "/" + appImageFolderName;
@@ -567,7 +566,7 @@ public interface FileUtils {
                     outputStream.close();
                 }
 
-                Messages.showTestLog(TAG, "✅ Image saved to MediaStore");
+                ImageHelperMessages.showTestLog(TAG, "✅ Image saved to MediaStore");
 
                 // Step 3: Display image
                 if (imageView != null) {
@@ -588,7 +587,7 @@ public interface FileUtils {
 
             } catch (Exception e) {
 
-                Messages.showTestLog(TAG, "🔥 Download failed: " + e.getMessage());
+                ImageHelperMessages.showTestLog(TAG, "🔥 Download failed: " + e.getMessage());
 
                 if (context instanceof Activity) {
                     ((Activity) context).runOnUiThread(() -> {
@@ -669,7 +668,7 @@ public interface FileUtils {
         String TAG = "FileUtils";
         String displayName = null;
 
-        Messages.showTestLog(TAG, "📄 Getting document name from URI: " + uri);
+        ImageHelperMessages.showTestLog(TAG, "📄 Getting document name from URI: " + uri);
 
         try (Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null)) {
 
@@ -681,13 +680,13 @@ public interface FileUtils {
             }
 
         } catch (Exception e) {
-            Messages.showTestLog(TAG, "🔥 Error fetching document name: " + e.getMessage());
+            ImageHelperMessages.showTestLog(TAG, "🔥 Error fetching document name: " + e.getMessage());
         }
 
         // Fallback
         if (displayName == null) {
             displayName = uri.getLastPathSegment();
-            Messages.showTestLog(TAG, "⚠️ Fallback document name used: " + displayName);
+            ImageHelperMessages.showTestLog(TAG, "⚠️ Fallback document name used: " + displayName);
         }
 
         return displayName;
@@ -703,7 +702,7 @@ public interface FileUtils {
 
         boolean result = url != null && url.toLowerCase().endsWith(".pdf");
 
-        Messages.showTestLog("FileUtils", "📑 isPDF check: " + result + " for URL: " + url);
+        ImageHelperMessages.showTestLog("FileUtils", "📑 isPDF check: " + result + " for URL: " + url);
 
         return result;
     }
@@ -720,7 +719,7 @@ public interface FileUtils {
         String TAG = "PDFThumbnail";
 
         if (file == null || !file.exists()) {
-            Messages.showTestLog(TAG, "❌ File is null or does not exist");
+            ImageHelperMessages.showTestLog(TAG, "❌ File is null or does not exist");
             return false;
         }
 
@@ -742,12 +741,12 @@ public interface FileUtils {
 
             page.close();
 
-            Messages.showTestLog(TAG, "✅ PDF thumbnail rendered successfully");
+            ImageHelperMessages.showTestLog(TAG, "✅ PDF thumbnail rendered successfully");
 
             return true;
 
         } catch (Exception e) {
-            Messages.showTestLog(TAG, "🔥 PDF render failed: " + e.getMessage());
+            ImageHelperMessages.showTestLog(TAG, "🔥 PDF render failed: " + e.getMessage());
             return false;
         }
     }
@@ -763,7 +762,7 @@ public interface FileUtils {
         String TAG = "FileUtils";
 
         if (url == null || url.trim().isEmpty()) {
-            Messages.showTestLog(TAG, "⚠️ URL is empty");
+            ImageHelperMessages.showTestLog(TAG, "⚠️ URL is empty");
             return "";
         }
 
@@ -772,12 +771,12 @@ public interface FileUtils {
             String path = uri.getPath();
             String fileName = path.substring(path.lastIndexOf('/') + 1);
 
-            Messages.showTestLog(TAG, "🌐 File name from URL: " + fileName);
+            ImageHelperMessages.showTestLog(TAG, "🌐 File name from URL: " + fileName);
 
             return fileName;
 
         } catch (MalformedURLException e) {
-            Messages.showTestLog(TAG, "🔥 Invalid URL: " + e.getMessage());
+            ImageHelperMessages.showTestLog(TAG, "🔥 Invalid URL: " + e.getMessage());
             return "";
         }
     }
@@ -797,7 +796,7 @@ public interface FileUtils {
         String TAG = "FileNameResolver";
 
         if (pathOrUrl == null || pathOrUrl.trim().isEmpty()) {
-            Messages.showTestLog(TAG, "⚠️ pathOrUrl is empty");
+            ImageHelperMessages.showTestLog(TAG, "⚠️ pathOrUrl is empty");
             return "unknown_file";
         }
 
@@ -815,7 +814,7 @@ public interface FileUtils {
 
                         if (nameIndex != -1) {
                             String fileName = cursor.getString(nameIndex);
-                            Messages.showTestLog(TAG, "📄 From content URI: " + fileName);
+                            ImageHelperMessages.showTestLog(TAG, "📄 From content URI: " + fileName);
                             return fileName;
                         }
                     }
@@ -828,7 +827,7 @@ public interface FileUtils {
                 File file = new File(pathOrUrl.replace("file://", ""));
                 String fileName = file.getName();
 
-                Messages.showTestLog(TAG, "📁 From file path: " + fileName);
+                ImageHelperMessages.showTestLog(TAG, "📁 From file path: " + fileName);
 
                 return fileName;
             }
@@ -842,7 +841,7 @@ public interface FileUtils {
                     fileName = URLDecoder.decode(fileName, "UTF-8");
                 } catch (Exception ignored) {}
 
-                Messages.showTestLog(TAG, "🌐 From URL: " + fileName);
+                ImageHelperMessages.showTestLog(TAG, "🌐 From URL: " + fileName);
 
                 return fileName;
             }
@@ -850,12 +849,12 @@ public interface FileUtils {
             // Case 4: fallback
             String fallback = pathOrUrl.substring(pathOrUrl.lastIndexOf('/') + 1);
 
-            Messages.showTestLog(TAG, "⚠️ Fallback used: " + fallback);
+            ImageHelperMessages.showTestLog(TAG, "⚠️ Fallback used: " + fallback);
 
             return fallback;
 
         } catch (Exception e) {
-            Messages.showTestLog(TAG, "🔥 Error resolving file name: " + e.getMessage());
+            ImageHelperMessages.showTestLog(TAG, "🔥 Error resolving file name: " + e.getMessage());
             return "unknown_file";
         }
     }
